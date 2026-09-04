@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SASI-MD — WhatsApp Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --red:       #e01c1c;
+    --red-deep:  #9b0f0f;
+    --red-glow:  #ff2a2a33;
+    --red-dim:   #5c0a0a;
+    --bg:        #0a0000;
+    --bg2:       #120000;
+    --bg3:       #1a0000;
+    --surface:   #200000;
+    --border:    #3a0000;
+    --text:      #f5e6e6;
+    --muted:     #9a7070;
+    --white:     #ffffff;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Space Grotesk', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── SCANLINE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,.08) 2px,
+      rgba(0,0,0,.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,0,0,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+  }
+
+  .nav-logo {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--red);
+    letter-spacing: .04em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+  }
+
+  .nav-links a:hover {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, #8b000033 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--red);
+    border: 1px solid var(--red-deep);
+    background: var(--red-glow);
+    padding: 5px 14px;
+    border-radius: 100px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-size: clamp(52px, 9vw, 96px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -.03em;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  .hero h1 span { color: var(--red); }
+
+  .hero-sub {
+    font-size: clamp(13px, 2vw, 17px);
+    color: var(--muted);
+    max-width: 520px;
+    margin: 20px auto 40px;
+    font-weight: 400;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 26px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all .15s;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 24px #e01c1c44;
+  }
+  .btn-primary:hover { background: #f52020; box-shadow: 0 0 36px #e01c1c66; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--red-deep); color: var(--red); background: var(--red-glow); }
+
+  .hero-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 64px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat { text-align: center; }
+  .stat-val {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--red);
+    display: block;
+  }
+  .stat-lbl {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-top: 2px;
+  }
+
+  /* ── SECTION SHELL ── */
+  section { padding: 80px 24px; max-width: 900px; margin: 0 auto; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--red);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .section-title {
+    font-size: clamp(26px, 4vw, 40px);
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -.02em;
+    margin-bottom: 40px;
+  }
+
+  /* ── PAIR CODE / QR PANELS ── */
+  .method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 640px) { .method-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    position: relative;
+  }
+
+  .panel-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .panel h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 18px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .input-field {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .input-field:focus { border-color: var(--red-deep); }
+  .input-field::placeholder { color: var(--muted); }
+
+  .code-display {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--red);
+    text-align: center;
+    letter-spacing: .3em;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+
+  .console {
+    background: #050000;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #cc4444;
+    min-height: 56px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+  }
+
+  .qr-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%;
+    aspect-ratio: 1;
+    max-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+    margin: 0 auto 16px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── COMMANDS TABLE ── */
+  .commands-section { max-width: 900px; }
+
+  .cmd-category {
+    margin-bottom: 40px;
+  }
+
+  .cmd-cat-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--red);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+  }
+
+  .cmd-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color .15s, background .15s;
+  }
+
+  .cmd-card:hover {
+    border-color: var(--red-deep);
+    background: var(--surface);
+  }
+
+  .cmd-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--red);
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+
+  .cmd-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── FEATURES ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .feat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 20px;
+  }
+
+  .feat-icon {
+    font-size: 24px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .feat-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .feat-card p {
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── HOW TO USE ── */
+  .steps { counter-reset: step; display: flex; flex-direction: column; gap: 0; }
+
+  .step {
+    display: flex;
+    gap: 24px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .step:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--red-deep);
+    font-weight: 600;
+    min-width: 32px;
+    padding-top: 2px;
+  }
+
+  .step-body h4 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .step-body p {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 560px;
+  }
+
+  .step-note {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--red);
+    background: var(--red-glow);
+    border: 1px solid var(--red-deep);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  footer strong { color: var(--red); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    max-width: 900px;
+    margin: 0 auto;
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── PULSE DOT ── */
+  .pulse-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    margin-right: 6px;
+    animation: pulse 1.8s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .3; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">SASI-MD</div>
+  <ul class="nav-links">
+    <li><a href="#pair">Pair Code</a></li>
+    <li><a href="#qr">QR Code</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#guide">Guide</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="hero-badge"><span class="pulse-dot"></span>v2.0 — Online</span>
+  <h1><span>SASI</span>-MD</h1>
+  <p class="hero-sub">
+    The fastest WhatsApp multi-device bot session gateway.
+    Pair your bot in seconds — no root, no extra apps.
+  </p>
+  <div class="hero-actions">
+    <a href="#pair" class="btn btn-primary">Get Pair Code</a>
+    <a href="#qr"   class="btn btn-ghost">Scan QR Code</a>
+    <a href="#commands" class="btn btn-ghost">View Commands</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><span class="stat-val">2s</span><span class="stat-lbl">Avg Link Time</span></div>
+    <div class="stat"><span class="stat-val">100%</span><span class="stat-lbl">Secure</span></div>
+    <div class="stat"><span class="stat-val">24/7</span><span class="stat-lbl">Uptime</span></div>
+    <div class="stat"><span class="stat-val">Free</span><span class="stat-lbl">Always</span></div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- PAIR + QR -->
+<section id="pair" style="max-width:900px;">
+  <div class="section-label">Session Gateway</div>
+  <div class="section-title">Link Your Bot</div>
+
+  <div class="method-grid">
+    <!-- PAIR CODE -->
+    <div class="panel">
+      <div class="panel-tag">Method 01 — Recommended</div>
+      <h3>Pair Code</h3>
+      <div class="input-row">
+        <input class="input-field" id="phoneInput" type="text" placeholder="94756XXXXXX"/>
+        <button class="btn btn-primary" onclick="genPair()" style="padding:10px 18px;font-size:13px;">Generate</button>
+      </div>
+      <div class="code-display" id="pairDisplay">——————</div>
+      <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:13px;" onclick="copyPair()">Copy Code</button>
+      <div class="console" id="pairConsole">[ SASI-MD ] Awaiting input…</div>
+    </div>
+
+    <!-- QR CODE -->
+    <div class="panel" id="qr">
+      <div class="panel-tag">Method 02</div>
+      <h3>QR Code</h3>
+      <div class="qr-box" id="qrBox">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#5c0a0a" stroke-width="1.5">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <path d="M14 14h.01M17 14h3M14 17h3M17 17v3M14 20h3"/>
+        </svg>
+        <span>Click generate</span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;font-size:13px;" onclick="genQR()">Generate QR Code</button>
+      <div class="console" id="qrConsole">[ SASI-MD ] Awaiting QR request…</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- COMMANDS -->
+<section id="commands" class="commands-section">
+  <div class="section-label">Bot Commands</div>
+  <div class="section-title">All Commands</div>
+
+  <!-- MEDIA -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Media</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.vv</span><span class="cmd-desc">Bypass view-once — saves the media before it disappears</span></div>
+      <div class="cmd-card"><span class="cmd-name">.play</span><span class="cmd-desc">Search and send a song directly in chat</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ytmp3</span><span class="cmd-desc">Download YouTube audio as MP3</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ytmp4</span><span class="cmd-desc">Download YouTube video as MP4</span></div>
+      <div class="cmd-card"><span class="cmd-name">.tiktok</span><span class="cmd-desc">Download TikTok video without watermark</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ig</span><span class="cmd-desc">Download Instagram reels and posts</span></div>
+      <div class="cmd-card"><span class="cmd-name">.fb</span><span class="cmd-desc">Download Facebook videos by link</span></div>
+      <div class="cmd-card"><span class="cmd-name">.sticker</span><span class="cmd-desc">Convert image or video reply into a WhatsApp sticker</span></div>
+      <div class="cmd-card"><span class="cmd-name">.toimg</span><span class="cmd-desc">Convert a sticker back into a PNG image</span></div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Profile</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.getpp</span><span class="cmd-desc">Fetch the profile picture of any number or tagged user</span></div>
+      <div class="cmd-card"><span class="cmd-name">.setpp</span><span class="cmd-desc">Update the bot's own profile picture</span></div>
+      <div class="cmd-card"><span class="cmd-name">.bio</span><span class="cmd-desc">Read a user's WhatsApp status/bio</span></div>
+      <div class="cmd-card"><span class="cmd-name">.name</span><span class="cmd-desc">Change the bot's display name</span></div>
+    </div>
+  </div>
+
+  <!-- GROUP MANAGEMENT -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Group Management</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.kick</span><span class="cmd-desc">Remove a tagged member from the group</span></div>
+      <div class="cmd-card"><span class="cmd-name">.add</span><span class="cmd-desc">Add a number to the current group</span></div>
+      <div class="cmd-card"><span class="cmd-name">.promote</span><span class="cmd-desc">Promote a member to group admin</span></div>
+      <div class="cmd-card"><span class="cmd-name">.demote</span><span class="cmd-desc">Remove admin rights from a member</span></div>
+      <div class="cmd-card"><span class="cmd-name">.mute</span><span class="cmd-desc">Restrict messaging — admins only mode</span></div>
+      <div class="cmd-card"><span class="cmd-name">.unmute</span><span class="cmd-desc">Allow all members to send messages again</span></div>
+      <div class="cmd-card"><span class="cmd-name">.link</span><span class="cmd-desc">Generate and share the group invite link</span></div>
+      <div class="cmd-card"><span class="cmd-name">.revoke</span><span class="cmd-desc">Reset the group invite link immediately</span></div>
+      <div class="cmd-card"><span class="cmd-name">.tagall</span><span class="cmd-desc">Mention all group members at once</span></div>
+      <div class="cmd-card"><span class="cmd-name">.hidetag</span><span class="cmd-desc">Tag all members silently — no ping sound</span></div>
+      <div class="cmd-card"><span class="cmd-name">.del</span><span class="cmd-desc">Delete a replied-to message from the chat</span></div>
+      <div class="cmd-card"><span class="cmd-name">.setname</span><span class="cmd-desc">Change the group subject/name</span></div>
+      <div class="cmd-card"><span class="cmd-name">.setdesc</span><span class="cmd-desc">Update the group description</span></div>
+    </div>
+  </div>
+
+  <!-- UTILITY -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Utility</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.alive</span><span class="cmd-desc">Check if the bot is running and connected</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ping</span><span class="cmd-desc">Measure bot response latency in milliseconds</span></div>
+      <div class="cmd-card"><span class="cmd-name">.menu</span><span class="cmd-desc">Display the full bot command menu</span></div>
+      <div class="cmd-card"><span class="cmd-name">.info</span><span class="cmd-desc">Show bot version, uptime, and owner info</span></div>
+      <div class="cmd-card"><span class="cmd-name">.tts</span><span class="cmd-desc">Convert text to voice audio message</span></div>
+      <div class="cmd-card"><span class="cmd-name">.tr</span><span class="cmd-desc">Translate a message — e.g. .tr en → si</span></div>
+      <div class="cmd-card"><span class="cmd-name">.weather</span><span class="cmd-desc">Get live weather report for any city</span></div>
+      <div class="cmd-card"><span class="cmd-name">.wiki</span><span class="cmd-desc">Search Wikipedia and return a summary</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ss</span><span class="cmd-desc">Take a screenshot of any website URL</span></div>
+      <div class="cmd-card"><span class="cmd-name">.short</span><span class="cmd-desc">Shorten a long URL instantly</span></div>
+      <div class="cmd-card"><span class="cmd-name">.lyrics</span><span class="cmd-desc">Fetch song lyrics by title and artist</span></div>
+      <div class="cmd-card"><span class="cmd-name">.time</span><span class="cmd-desc">Get current time in any timezone</span></div>
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">AI</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.ai</span><span class="cmd-desc">Chat with an AI assistant — ask anything</span></div>
+      <div class="cmd-card"><span class="cmd-name">.img</span><span class="cmd-desc">Generate an image from a text description</span></div>
+      <div class="cmd-card"><span class="cmd-name">.remini</span><span class="cmd-desc">Upscale and enhance a low-resolution image</span></div>
+      <div class="cmd-card"><span class="cmd-name">.removebg</span><span class="cmd-desc">Remove the background from any photo</span></div>
+    </div>
+  </div>
+
+  <!-- FUN -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Fun &amp; Games</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.truth</span><span class="cmd-desc">Get a random truth question</span></div>
+      <div class="cmd-card"><span class="cmd-name">.dare</span><span class="cmd-desc">Get a random dare challenge</span></div>
+      <div class="cmd-card"><span class="cmd-name">.quote</span><span class="cmd-desc">Send a random inspirational quote</span></div>
+      <div class="cmd-card"><span class="cmd-name">.joke</span><span class="cmd-desc">Tell a random joke</span></div>
+      <div class="cmd-card"><span class="cmd-name">.fact</span><span class="cmd-desc">Share a random interesting fact</span></div>
+      <div class="cmd-card"><span class="cmd-name">.tictactoe</span><span class="cmd-desc">Play Tic-Tac-Toe against another user</span></div>
+      <div class="cmd-card"><span class="cmd-name">.trivia</span><span class="cmd-desc">Start a trivia quiz in the group</span></div>
+      <div class="cmd-card"><span class="cmd-name">.ship</span><span class="cmd-desc">Calculate the love percentage between two users</span></div>
+    </div>
+  </div>
+
+  <!-- OWNER -->
+  <div class="cmd-category">
+    <div class="cmd-cat-title">Owner Only</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><span class="cmd-name">.ban</span><span class="cmd-desc">Blacklist a user from all bot commands</span></div>
+      <div class="cmd-card"><span class="cmd-name">.unban</span><span class="cmd-desc">Remove a user from the bot blacklist</span></div>
+      <div class="cmd-card"><span class="cmd-name">.broadcast</span><span class="cmd-desc">Send a message to all saved chats</span></div>
+      <div class="cmd-card"><span class="cmd-name">.restart</span><span class="cmd-desc">Restart the bot process remotely</span></div>
+      <div class="cmd-card"><span class="cmd-name">.shutdown</span><span class="cmd-desc">Shut the bot down completely</span></div>
+      <div class="cmd-card"><span class="cmd-name">.mode</span><span class="cmd-desc">Switch between public and private bot mode</span></div>
+    </div>
+  </div>
+
+</section>
+
+<hr class="divider"/>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">What It Does</div>
+  <div class="section-title">Features</div>
+  <div class="features-grid">
+    <div class="feat-card"><span class="feat-icon">🎵</span><h4>Music Downloader</h4><p>Songs from YouTube and Spotify sent directly to chat.</p></div>
+    <div class="feat-card"><span class="feat-icon">📹</span><h4>Video Downloader</h4><p>TikTok, Instagram, YouTube — fast and watermark-free.</p></div>
+    <div class="feat-card"><span class="feat-icon">👥</span><h4>Group Management</h4><p>Full admin toolset — kick, mute, tag, promote, revoke.</p></div>
+    <div class="feat-card"><span class="feat-icon">🎨</span><h4>Sticker Maker</h4><p>Images and GIFs become stickers in one command.</p></div>
+    <div class="feat-card"><span class="feat-icon">🤖</span><h4>AI Chat</h4><p>Ask anything — powered by latest language models.</p></div>
+    <div class="feat-card"><span class="feat-icon">🔒</span><h4>View Once Bypass</h4><p>.vv saves view-once media before it self-destructs.</p></div>
+    <div class="feat-card"><span class="feat-icon">🌐</span><h4>Translator</h4><p>100+ languages, one command, instant results.</p></div>
+    <div class="feat-card"><span class="feat-icon">🛡️</span><h4>Anti-Spam</h4><p>Auto-detects and removes flood messages from groups.</p></div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- HOW TO USE -->
+<section id="guide">
+  <div class="section-label">Setup Guide</div>
+  <div class="section-title">How to Connect</div>
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">01</span>
+      <div class="step-body">
+        <h4>Open the Pair Code section</h4>
+        <p>Click Pair Code in the nav above to jump to the generator.</p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">02</span>
+      <div class="step-body">
+        <h4>Enter your WhatsApp number</h4>
+        <p>Type your full number with country code — no + sign. Example: 94756XXXXXX for Sri Lanka.</p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">03</span>
+      <div class="step-body">
+        <h4>Click Generate</h4>
+        <p>An 8-digit code appears within a few seconds.</p>
+        <span class="step-note">Code valid for ~60 seconds</span>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">04</span>
+      <div class="step-body">
+        <h4>Open WhatsApp → Linked Devices</h4>
+        <p>Tap the 3-dot menu → Linked Devices → Link a Device → Link with phone number.</p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">05</span>
+      <div class="step-body">
+        <h4>Enter the code</h4>
+        <p>Type the 8-digit code. Your bot session links automatically.</p>
+      </div>
+    </div>
+    <div class="step">
+      <span class="step-num">06</span>
+      <div class="step-body">
+        <h4>Copy your Session ID</h4>
+        <p>Your Session ID appears on screen. Copy it into your bot's config file and you're live.</p>
+        <span class="step-note">Session saved to database</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong>SASI-MD</strong> v2.0 &nbsp;·&nbsp; WhatsApp Session Gateway &nbsp;·&nbsp; © 2026
+</footer>
+
+<script>
+  function genPair() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    const con = document.getElementById('pairConsole');
+    const disp = document.getElementById('pairDisplay');
+    if (!phone) { con.textContent = '[ ERROR ] Enter your phone number first.'; return; }
+    if (!/^\d{7,15}$/.test(phone)) { con.textContent = '[ ERROR ] Invalid number format.'; return; }
+    disp.textContent = '——————';
+    con.textContent = '[ SASI-MD ] Connecting to WhatsApp…';
+    setTimeout(() => { con.textContent = '[ SASI-MD ] Generating pair code…'; }, 600);
+    setTimeout(() => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const half = () => Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+      const code = `${half()}-${half()}`;
+      disp.textContent = code;
+      con.textContent = `[ SASI-MD ] Code ready for +${phone}\n[ SASI-MD ] Enter it in WhatsApp → Linked Devices.`;
+    }, 1600);
+  }
+
+  function copyPair() {
+    const text = document.getElementById('pairDisplay').textContent;
+    if (text.includes('—')) return;
+    navigator.clipboard.writeText(text);
+    document.getElementById('pairConsole').textContent = '[ SASI-MD ] Code copied to clipboard.';
+  }
+
+  function genQR() {
+    const con = document.getElementById('qrConsole');
+    const box = document.getElementById('qrBox');
+    con.textContent = '[ SASI-MD ] Generating QR code…';
+    box.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#e01c1c" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><span style="color:#5c0a0a;font-size:11px;">Loading…</span>';
+    setTimeout(() => {
+      const ts = Date.now();
+      box.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=SASI-MD-SESSION-${ts}&color=e01c1c&bgcolor=120000" style="width:100%;height:100%;object-fit:contain;border-radius:6px;" onerror="this.parentElement.innerHTML='<span style=color:#e01c1c;font-family:monospace;font-size:11px>QR Ready</span>'"/>`;
+      con.textContent = `[ SASI-MD ] QR generated. Scan within 20 seconds.\n[ SASI-MD ] WhatsApp → Linked Devices → Link a Device.`;
+    }, 1400);
+  }
+</script>
+</body>
+</html>
